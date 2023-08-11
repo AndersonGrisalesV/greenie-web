@@ -5,8 +5,6 @@ import datetime
 import time
 import schedule
 import openpyxl
-import nvidia_smi
-import pyamdgpuinfo
 import platform
 
 
@@ -16,14 +14,15 @@ def main():
     # Schedule the warning and monitoring tasks
     # schedule.every(1).second.do(warning)
     schedule.every(5).seconds.do(monitor, pid)
-    detected_gpus = detect_gpus()
+  
+    # detected_gpus = detect_gpus()
 
-    if detected_gpus:
-        print("Detected GPUs:")
-        for gpu in detected_gpus:
-            print(f"Type: {gpu['type']}, Index: {gpu['index']}, Name: {gpu['name']}")
-    else:
-        print("No GPUs detected.")
+    # if detected_gpus:
+    #     print("Detected GPUs:")
+    #     for gpu in detected_gpus:
+    #         print(f"Type: {gpu['type']}, Index: {gpu['index']}, Name: {gpu['name']}")
+    # else:
+    #     print("No GPUs detected.")
 
     
     try:
@@ -72,39 +71,24 @@ def monitor(pid):
     
     file.save(path)
 
-def detect_gpus():
-    gpus = []
+# def detect_gpus():
+#     gpus = []
 
-    # Detect NVIDIA GPUs using nvidia-ml-py
-    try:
-        nvidia_smi.nvmlInit()
-        device_count = nvidia_smi.nvmlDeviceGetCount()
-        for i in range(device_count):
-            gpu_info = {
-                "type": "NVIDIA",
-                "index": i,
-                "name": nvidia_smi.nvmlDeviceGetName(nvidia_smi.nvmlDeviceGetHandleByIndex(i)).decode("utf-8")
-            }
-            gpus.append(gpu_info)
-    except nvidia_smi.NVMLError:
-        pass
-    finally:
-        nvidia_smi.nvmlShutdown()
-
-    # Detect AMD GPUs using pyamdgpuinfo
-    try:
-        amd_gpus = pyamdgpuinfo.detect_gpus()
-        for i, gpu in enumerate(amd_gpus):
-            gpu_info = {
-                "type": "AMD",
-                "index": i,
-                "name": gpu["name"]
-            }
-            gpus.append(gpu_info)
-    except pyamdgpuinfo.AMDGPUError:
-        pass
-
-    return gpus
+#     # Detect NVIDIA GPUs using nvidia-ml-py
+#     try:
+#         nvidia_smi.nvmlInit()
+#         device_count = nvidia_smi.nvmlDeviceGetCount()
+#         for i in range(device_count):
+#             gpu_info = {
+#                 "type": "NVIDIA",
+#                 "index": i,
+#                 "name": nvidia_smi.nvmlDeviceGetName(nvidia_smi.nvmlDeviceGetHandleByIndex(i)).decode("utf-8")
+#             }
+#             gpus.append(gpu_info)
+#     except nvidia_smi.NVMLError:
+#         pass
+#     finally:
+#         nvidia_smi.nvmlShutdown()
 
 
 
