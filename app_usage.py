@@ -15,10 +15,7 @@ import os
 import subprocess
 import pynvml
 
-
-
 # Define a simple linear model parameters
-# These values are purely for demonstration purposes and are not accurate
 CPU_POWER_COEFFICIENT = 0.02  # Coefficient to relate CPU usage to power consumption
 BASE_POWER = 10  # Base power consumption
 DISK_POWER_COEFFICIENT = 0.001  # Coefficient to relate disk usage to power consumption
@@ -55,7 +52,6 @@ def main():
     except Exception as e:
         print("An error occurred:", e)
 
-
 def get_process_disk_usage(pid):
     try:
         process = psutil.Process(pid)
@@ -76,7 +72,7 @@ def gpu_available():
     try:
         subprocess.check_output('nvidia-smi')
         return 1
-    except Exception: # this command not being found can raise quite a few different errors depending on the configuration
+    except Exception:
         return 0
     
 def get_gpu_memory_usage():
@@ -99,9 +95,7 @@ def get_gpu_memory_usage():
 def gpu_see_usage():
     pynvml.nvmlInit()
 
-    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-    # card id 0 hardcoded here, there is also a call to get all available card ids, so we could iterate
-
+    handle = pynvml.nvmlDeviceGetHandleByIndex(0)  # Assuming GPU index 0, can iterate for multiple GPUs
     info = pynvml.nvmlDeviceGetMemoryInfo(handle)
     total_memory = info.total
     used_memory = info.used
@@ -115,8 +109,9 @@ def gpu_see_usage():
 def monitor_with_progress(pid, process_name):
     print("Monitoring process:", process_name)
     sleep(1)
-    gpu_active= gpu_available()
+    gpu_active = gpu_available()
     
+    # Initialize progress bars
     with tqdm(total=100, desc='% CPU USAGE: ', position=0) as cpubar, \
             tqdm(total=100, desc='% GPU USAGE: ', position=1) as gpubar, \
             tqdm(total=100, desc='% RAM USAGE: ', position=2) as rambar, \
@@ -138,29 +133,22 @@ def monitor_with_progress(pid, process_name):
                
                 gpu_usage = gpu_see_usage()
                 power_consumption = estimate_power_usage(cpu_usage, disk_usage, memory, gpu_usage)
+                
                 # Update progress bars
                 cpubar.n = cpu_usage
-
-                if (gpu_active == 1):
+                if gpu_active == 1:
                     gpubar.n = gpu_usage
-
-
                 rambar.n = memory
                 diskbar.n = disk_usage
                 powerconbar.n = power_consumption
                 
                 # Refresh progress bars
                 cpubar.refresh()
-
-                if (gpu_active == 1):
-                   gpubar.refresh()
-
-
+                if gpu_active == 1:
+                    gpubar.refresh()
                 rambar.refresh()
                 diskbar.refresh()
                 powerconbar.refresh()
-
-
 
                 path = "Monitor_Result.xlsx"
 
@@ -178,18 +166,16 @@ def monitor_with_progress(pid, process_name):
                     sheet.cell(column=5, row=1, value="% - GPU Usage")
                     sheet.cell(column=6, row=1, value="% - Memory usage")
                     sheet.cell(column=7, row=1, value="% - Disk usage")
-                    sheet.cell(column=8, row=1, value="% - Estimated Power Consumption")  # Added column
-
+                    sheet.cell(column=8, row=1, value="% - Estimated Power Consumption")
+                
                 row_data = [current_time, pid, process_name, cpu_usage, gpu_usage, memory_formatted, disk_usage, power_consumption]
                 sheet.append(row_data)
 
                 file.save(path)
-
                 
         except KeyboardInterrupt:
             print("\nMonitoring stopped.")
         print("Press Ctrl + C to exit")
-    
 
 if __name__ == "__main__":
     main()
